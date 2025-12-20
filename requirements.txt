@@ -1,0 +1,49 @@
+# Core RAG Frameworks
+langchain>=0.1.0
+langgraph>=0.0.40
+llama-index>=0.9.0
+
+# LLM Provider - Gemini
+google-generativeai>=0.3.0
+
+# Vector Databases
+qdrant-client>=1.7.0
+chromadb>=0.4.0
+
+# Caching
+redis>=5.0.0
+psycopg2-binary>=2.9.0
+
+# Document Loaders & Processing
+pypdf>=3.17.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+unstructured>=0.11.0
+python-docx>=1.1.0
+python-pptx>=0.6.0
+
+# Web Search & External Tools
+tavily-python>=0.3.0
+requests>=2.31.0
+
+# Text Processing & Embeddings
+tiktoken>=0.5.0
+sentence-transformers>=2.2.0
+
+# API Framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+aiohttp>=3.9.0
+httpx>=0.25.0
+
+# Observability & Tracing
+langsmith>=0.0.60
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
