@@ -17,7 +17,7 @@ This project implements a multi-phase RAG system with:
 
 ## 📋 Project Phases
 
-### ✅ Phase 0: Tech Stack Setup (Current)
+### ✅ Phase 0: Tech Stack Setup (Complete)
 
 - Framework configuration locked
 - Environment management with Pydantic settings
@@ -25,13 +25,15 @@ This project implements a multi-phase RAG system with:
 - Cache layer setup (Redis/SQLite/Postgres)
 - Gemini LLM client wrapper
 
-### 🔄 Phase 1: Basic RAG Pipeline
+### ✅ Phase 1: Basic RAG Pipeline (Complete)
 
 - Document ingestion and processing
-- Chunking and embeddings
-- Vector retrieval
-- Basic RAG chain with caching
-- FastAPI endpoint
+- Chunking and embeddings with caching
+- Vector retrieval with score thresholding
+- RAG chain with context injection
+- Response caching
+- FastAPI REST endpoints
+- CLI query tools
 
 ### 🔄 Phase 2: LangGraph Orchestration
 
@@ -62,11 +64,20 @@ RAG-Prod-Level/
 │   ├── db/              # Vector database clients (Qdrant, Chroma)
 │   ├── cache/           # Embedding and response caching
 │   ├── llm/             # Gemini LLM wrapper
-│   └── api/             # FastAPI endpoints (Phase 1+)
+│   ├── ingestion/       # Document loaders (PDF, web, text, Word)
+│   ├── processing/      # Chunking and embedding pipeline
+│   ├── retrieval/       # Document retrieval with caching
+│   ├── rag/             # RAG chain implementation
+│   └── api/             # FastAPI REST endpoints
+├── scripts/
+│   ├── ingest_documents.py   # Document ingestion script
+│   ├── query_rag.py          # Interactive query CLI
+│   └── run_server.py         # API server launcher
 ├── data/
 │   ├── raw/             # Raw documents
 │   └── processed/       # Processed chunks
 ├── cache/               # Local cache storage
+├── docs/                # Documentation
 ├── tests/               # Test suite
 ├── .env.example         # Environment template
 ├── requirements.txt     # Python dependencies
@@ -136,6 +147,41 @@ python main.py
 
 This will verify all components are correctly configured.
 
+### Running Phase 1: Basic RAG
+
+#### 1. Ingest Documents
+```bash
+python scripts/ingest_documents.py
+```
+
+Creates a sample document and stores it in the vector database.
+
+#### 2. Query via CLI
+```bash
+python scripts/query_rag.py
+```
+
+Interactive query mode with cache statistics.
+
+#### 3. Run API Server
+```bash
+python scripts/run_server.py
+```
+
+Access API at:
+- Interactive docs: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
+- Stats: http://localhost:8000/stats
+
+#### 4. Query via API
+```bash
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "What is RAG?", "user_id": "test", "return_sources": true}'
+```
+
+See [Quick Start Guide](docs/quickstart.md) for detailed instructions.
+
 ## 🔧 Tech Stack
 
 | Component           | Development                      | Production           |
@@ -166,6 +212,8 @@ pytest tests/
 
 ## 📚 Documentation
 
+- [Quick Start Guide](docs/quickstart.md)
+- [Phase 1 Details](docs/phase1.md)
 - [LangChain Documentation](https://python.langchain.com/)
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [LlamaIndex Documentation](https://docs.llamaindex.ai/)
@@ -174,7 +222,7 @@ pytest tests/
 ## 🛣️ Roadmap
 
 - [x] Phase 0: Tech stack configuration
-- [ ] Phase 1: Basic RAG pipeline
+- [x] Phase 1: Basic RAG pipeline
 - [ ] Phase 2: Agentic orchestration
 - [ ] Phase 3: Advanced retrieval
 - [ ] Phase 4: Production features
@@ -185,4 +233,6 @@ MIT
 
 ---
 
-**Current Status:** Phase 0 Complete ✅
+**Current Status:** Phase 1 Complete ✅
+
+**Next:** Phase 2 - LangGraph Orchestration (Agentic RAG)
