@@ -10,6 +10,7 @@ import logging
 
 from ..config import settings
 from ..rag import create_rag_pipeline
+from ..graph import create_agentic_rag
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, settings.log_level))
@@ -18,8 +19,8 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="RAG Production API",
-    description="Production-ready Retrieval-Augmented Generation API",
-    version="1.0.0"
+    description="Production-ready Retrieval-Augmented Generation API with Agentic Mode",
+    version="2.0.0"
 )
 
 # Add CORS middleware
@@ -33,6 +34,7 @@ app.add_middleware(
 
 # Initialize RAG pipeline (will be initialized on first request)
 rag_pipeline = None
+agentic_rag = None
 
 
 # Request/Response Models
@@ -41,13 +43,15 @@ class QueryRequest(BaseModel):
     query: str = Field(..., description="The question to ask", min_length=1)
     user_id: Optional[str] = Field(None, description="Optional user identifier")
     return_sources: bool = Field(True, description="Whether to return source documents")
+    use_agentic: bool = Field(False, description="Use agentic RAG with LangGraph (Phase 2)")
 
     class Config:
         json_schema_extra = {
             "example": {
                 "query": "What is the main topic of the documents?",
                 "user_id": "user123",
-                "return_sources": True
+                "return_sources": True,
+                "use_agentic": False
             }
         }
 
@@ -113,14 +117,28 @@ def get_rag_pipeline():
     return rag_pipeline
 
 
+def get_agentic_rag():
+    """Get or initialize agentic RAG graph."""
+    global agentic_rag
+    if agentic_rag is None:
+        logger.info("Initializing Agentic RAG (LangGraph)...")
+        agentic_rag = create_agentic_rag()
+        logger.info("Agentic RAG initialized successfully")
+    return agentic_rag
+
+
 # API Endpoints
 @app.get("/", tags=["Root"])
 async def root():
     """Root endpoint."""
     return {
-        "message": "RAG Production API",
-        "version": "1.0.0",
-        "docs": "/docs"
+        "message": "RAG Production API with Agentic Mode",
+        "version": "2.0.0",
+        "docs": "/docs",
+        "features": {
+            "phase1": "Basic RAG with caching",
+            "phase2": "Agentic RAG with LangGraph"
+        }
     }
 
 
@@ -155,18 +173,42 @@ async def query_rag(request: QueryRequest):
     """
     try:
         logger.info(f"Received query from user_id={request.user_id}: {request.query[:100]}...")
+        logger.info(f"Mode: {'Agentic (Phase 2)' if request.use_agentic else 'Basic (Phase 1)'}")
         
-        # Get RAG pipeline
-        pipeline = get_rag_pipeline()
+        if request.use_agentic:
+            # Use agentic RAG with LangGraph
+            graph = get_agentic_rag()
+            graph_result = graph.invoke(request.query)
+            
+            # Convert to standard response format
+            result = {
+                "answer": graph_result["answer"],
+                "sources": [],  # Extract from documents
+                "num_sources": len(graph_result.get("documents", [])),
+                "metadata": {
+                    "user_id": request.user_id,
+                    "mode": "agentic",
+                    "retry_count": graph_result.get("retry_count", 0),
+                    "retrieval_attempted": graph_result.get("retrieval_attempted", False),
+                    "question_rewritten": graph_result.get("question") != request.query
+                }
+            }
+            
+            # Extract sources if requested
+            if request.return_sources and graph_result.get("documents"):
+                from ..retrieval import create_retriever
+                retriever = create_retriever()
+                result["sources"] = retriever.get_sources(graph_result["documents"])
+        else:
+            # Use basic RAG pipeline
+            pipeline = get_rag_pipeline()
+            result = pipeline.query(
+                question=request.query,
+                user_id=request.user_id,
+                return_sources=request.return_sources
+            )
         
-        # Execute query
-        result = pipeline.query(
-            question=request.query,
-            user_id=request.user_id,
-            return_sources=request.return_sources
-        )
-        
-        logger.info(f"Query processed successfully. Cache hit rate: {result['metadata']['cache_stats']['hit_rate_percent']}%")
+        logger.info(f"Query processed successfully")
         
         return QueryResponse(**result)
     
