@@ -19,9 +19,11 @@ src/llamaindex/
 ### Key Classes
 
 #### 1. LlamaIndexManager
+
 Manages VectorStoreIndex with Qdrant/Chroma backend.
 
 **Features:**
+
 - Create/load indices from documents
 - Add documents to existing index
 - Get retriever or query engine
@@ -29,6 +31,7 @@ Manages VectorStoreIndex with Qdrant/Chroma backend.
 - Automatic embedding with Gemini
 
 **Methods:**
+
 ```python
 manager = LlamaIndexManager()
 manager.create_index(documents)            # Create from documents
@@ -40,6 +43,7 @@ query_engine = manager.get_query_engine()  # Get query engine
 #### 2. Query Engines
 
 **CompactEngine:**
+
 - Concatenates retrieved chunks
 - Single LLM call for synthesis
 - Best for: Straightforward questions
@@ -51,6 +55,7 @@ response = engine.query("What is RAG?")
 ```
 
 **RouterEngine:**
+
 - Routes queries to multiple indices
 - LLM-based source selection
 - Best for: Multi-source knowledge bases
@@ -65,6 +70,7 @@ response = router.query("Explain vector databases")
 ```
 
 **SubQuestionEngine:**
+
 - Breaks complex queries into sub-questions
 - Answers each independently
 - Synthesizes final response
@@ -79,6 +85,7 @@ response = subq_engine.query("How do embeddings enable similarity search?")
 ```
 
 **HybridEngine:**
+
 - Automatic mode selection
 - Combines compact, router, and sub-question
 - Chooses best strategy based on query
@@ -93,6 +100,7 @@ response = hybrid.query(query, mode="auto")  # Auto-selects mode
 Enables LlamaIndex query engines to be used in LangGraph workflows.
 
 **LlamaIndexTools:**
+
 ```python
 tools = LlamaIndexTools(index_manager)
 tool_list = tools.get_tools()  # Returns LangChain tools
@@ -123,6 +131,7 @@ graph = AgenticRAGGraph(use_llamaindex=True)
 ```
 
 **Retrieval Flow:**
+
 ```
 classify_or_answer
     ↓ (needs_retrieval=True)
@@ -136,12 +145,14 @@ grade_documents
 
 ### Node Updates
 
-**RAGNodes.__init__:**
+**RAGNodes.**init**:**
+
 - Accepts `use_llamaindex` parameter
 - Initializes LlamaIndexManager if enabled
 - Falls back to LangChain on error
 
 **RAGNodes.retrieve:**
+
 - Checks `self.use_llamaindex` flag
 - Uses LlamaIndex retriever or LangChain retriever
 - Converts LlamaIndex nodes to document format
@@ -292,24 +303,28 @@ for tool in tool_list:
 ## Response Synthesis Modes
 
 ### Compact Mode (Default)
+
 - **How it works:** Concatenates chunks, single LLM call
 - **Pros:** Fast, efficient token usage
 - **Cons:** May miss nuances if too many chunks
 - **Best for:** Clear, factual questions
 
 ### Refine Mode
+
 - **How it works:** Iteratively refines answer across chunks
 - **Pros:** Detailed, comprehensive answers
 - **Cons:** Slower, higher token usage (multiple LLM calls)
 - **Best for:** Complex explanations, analysis
 
 ### Tree Summarize Mode
+
 - **How it works:** Builds hierarchical summary tree
 - **Pros:** Good for summarization tasks
 - **Cons:** More complex, slower
 - **Best for:** Overviews, summaries
 
 ### Simple Summarize Mode
+
 - **How it works:** Truncates chunks to fit context
 - **Pros:** Very fast, simple
 - **Cons:** May lose information
@@ -318,11 +333,13 @@ for tool in tool_list:
 ## Testing
 
 ### Test Script
+
 ```bash
 python scripts/test_llamaindex.py
 ```
 
 **Tests:**
+
 1. Basic indexing and compact query
 2. Response synthesis modes (compact, refine, tree)
 3. Router engine with multiple indices
@@ -334,16 +351,19 @@ python scripts/test_llamaindex.py
 After tests, enter interactive mode to ask questions.
 
 ### Comparison Script
+
 ```bash
 python scripts/compare_retrievers.py
 ```
 
 Compares:
+
 - LangChain retriever (Phase 1)
 - LlamaIndex compact engine
 - LlamaIndex refine engine
 
 Metrics:
+
 - Retrieval time
 - Number of sources/documents
 - Response quality
@@ -375,6 +395,7 @@ When `use_agentic=true` and `LLAMAINDEX_ENABLE_HYBRID=true`, the retrieve node u
 ## Performance Considerations
 
 ### Speed Comparison
+
 - **LangChain retriever:** Fastest (pure retrieval)
 - **LlamaIndex compact:** Moderate (retrieval + synthesis)
 - **LlamaIndex refine:** Slowest (multiple LLM calls)
@@ -382,26 +403,31 @@ When `use_agentic=true` and `LLAMAINDEX_ENABLE_HYBRID=true`, the retrieve node u
 ### When to Use Each
 
 **LangChain Retriever:**
+
 - Need raw documents
 - Building custom synthesis
 - Performance critical
 
 **LlamaIndex Compact:**
+
 - Want natural language responses
 - Balanced speed/quality
 - General use cases
 
 **LlamaIndex Refine:**
+
 - Need detailed explanations
 - Quality over speed
 - Complex analysis
 
 **Router Engine:**
+
 - Multiple knowledge sources
 - Domain-specific routing
 - Clear topic boundaries
 
 **Sub-Question Engine:**
+
 - Complex multi-part questions
 - Cross-domain queries
 - Need decomposition
@@ -409,6 +435,7 @@ When `use_agentic=true` and `LLAMAINDEX_ENABLE_HYBRID=true`, the retrieve node u
 ## Debugging
 
 ### Enable Logging
+
 ```python
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -417,19 +444,23 @@ logging.basicConfig(level=logging.DEBUG)
 ### Common Issues
 
 **1. LlamaIndex not initializing:**
+
 ```
 [INIT] LlamaIndex initialization failed: ...
 ```
+
 - Check `llama-index` packages installed
 - Verify `GEMINI_API_KEY` set
 - Ensure vector store accessible
 
 **2. Empty responses:**
+
 - Check if index has documents
 - Verify embedding model working
 - Check retrieval_top_k setting
 
 **3. Slow queries:**
+
 - Use compact mode instead of refine
 - Reduce similarity_top_k
 - Check vector store performance
@@ -437,6 +468,7 @@ logging.basicConfig(level=logging.DEBUG)
 ### Verbose Output
 
 Nodes print execution info:
+
 ```
 [INIT] LlamaIndex retriever initialized
 [RETRIEVE] Using LlamaIndex retriever
@@ -445,19 +477,20 @@ Nodes print execution info:
 
 ## Comparison: LangChain vs LlamaIndex
 
-| Feature | LangChain (Phase 1) | LlamaIndex (Phase 3) |
-|---------|---------------------|----------------------|
-| **Retrieval** | ✓ Fast, simple | ✓ Advanced strategies |
-| **Synthesis** | Manual (RAG chain) | ✓ Built-in modes |
-| **Multi-source** | Manual routing | ✓ Router engine |
-| **Sub-questions** | Not supported | ✓ Decomposition |
-| **Speed** | ✓ Fastest | Moderate |
-| **Ease of use** | Moderate | ✓ High-level APIs |
-| **Flexibility** | ✓ Full control | Opinionated |
+| Feature           | LangChain (Phase 1) | LlamaIndex (Phase 3)  |
+| ----------------- | ------------------- | --------------------- |
+| **Retrieval**     | ✓ Fast, simple      | ✓ Advanced strategies |
+| **Synthesis**     | Manual (RAG chain)  | ✓ Built-in modes      |
+| **Multi-source**  | Manual routing      | ✓ Router engine       |
+| **Sub-questions** | Not supported       | ✓ Decomposition       |
+| **Speed**         | ✓ Fastest           | Moderate              |
+| **Ease of use**   | Moderate            | ✓ High-level APIs     |
+| **Flexibility**   | ✓ Full control      | Opinionated           |
 
 ## Next Steps
 
 **Phase 4: Production Hardening**
+
 - Multi-tenant support
 - Background ingestion workers
 - Rate limiting

@@ -43,11 +43,15 @@ This project implements a multi-phase RAG system with:
 - Query rewriting and document grading
 - Conditional routing and retry logic
 
-### 🔄 Phase 3: LlamaIndex Integration
+### ✅ Phase 3: LlamaIndex Integration (Complete)
 
-- Advanced indexes and routers
-- Sub-question decomposition
-- Config-driven retrieval
+- VectorStoreIndex with Qdrant/Chroma backend
+- Advanced query engines (Compact, Refine, Tree Summarize)
+- Router engine for multi-source selection
+- Sub-question decomposition for complex queries
+- Hybrid engine with automatic mode selection
+- LangChain tool wrappers for LangGraph integration
+- Integrated with Phase 2 agentic workflow
 
 ### 🔄 Phase 4: Production Hardening
 
@@ -71,12 +75,15 @@ RAG-Prod-Level/
 │   ├── rag/             # RAG chain implementation (Phase 1)
 │   ├── graph/           # LangGraph agentic workflow (Phase 2)
 │   ├── tools/           # External tool integrations (Phase 2)
+│   ├── llamaindex/      # LlamaIndex integration (Phase 3)
 │   └── api/             # FastAPI REST endpoints
 ├── scripts/
 │   ├── ingest_documents.py   # Document ingestion script
 │   ├── query_rag.py          # Interactive query CLI (Phase 1)
 │   ├── test_agentic_rag.py   # Agentic RAG testing (Phase 2)
 │   ├── compare_rag_modes.py  # Compare Phase 1 vs 2 (Phase 2)
+│   ├── test_llamaindex.py    # LlamaIndex testing (Phase 3)
+│   ├── compare_retrievers.py # Compare retrievers (Phase 3)
 │   └── run_server.py         # API server launcher
 ├── data/
 │   ├── raw/             # Raw documents
@@ -85,7 +92,8 @@ RAG-Prod-Level/
 ├── docs/                # Documentation
 │   ├── quickstart.md    # Quick start guide
 │   ├── phase1.md        # Phase 1 details
-│   └── phase2.md        # Phase 2 details
+│   ├── phase2.md        # Phase 2 details
+│   └── phase3.md        # Phase 3 details
 ├── tests/               # Test suite
 ├── .env.example         # Environment template
 ├── requirements.txt     # Python dependencies
@@ -229,6 +237,53 @@ The agentic mode will:
 - Rewrite unclear queries
 - Grade document relevance
 - Retry with better queries if needed
+
+### Running Phase 3: LlamaIndex Integration
+
+#### 1. Test Advanced Query Engines
+
+```bash
+python scripts/test_llamaindex.py
+```
+
+Tests all query engines:
+
+- Compact response synthesis
+- Refine mode for detailed answers
+- Tree summarize for overviews
+- Router engine for multi-source selection
+- Sub-question decomposition
+- LangChain tool wrappers
+
+Includes interactive mode for experimentation.
+
+#### 2. Compare Retrievers
+
+```bash
+python scripts/compare_retrievers.py
+```
+
+Benchmarks:
+
+- LangChain retriever (Phase 1)
+- LlamaIndex Compact engine
+- LlamaIndex Refine engine
+
+Shows performance and quality trade-offs.
+
+#### 3. Use LlamaIndex in Agentic Mode
+
+```bash
+# Enable in .env
+LLAMAINDEX_ENABLE_HYBRID=true
+
+# Query with agentic mode (uses LlamaIndex retriever)
+curl -X POST "http://localhost:8000/query" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Explain RAG", "use_agentic": true}'
+```
+
+When `LLAMAINDEX_ENABLE_HYBRID=true`, the agentic workflow uses LlamaIndex for advanced retrieval and synthesis.
 
 Access API at:
 
