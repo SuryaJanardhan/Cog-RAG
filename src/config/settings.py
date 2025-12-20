@@ -75,6 +75,10 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = Field(default="INFO")
     
+    # Tool Configuration (Phase 2)
+    tavily_api_key: str = Field(default="")
+    enable_web_search: bool = Field(default=False)
+    
     @property
     def is_dev(self) -> bool:
         """Check if running in development mode."""
