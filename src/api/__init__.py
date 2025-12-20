@@ -1,3 +1,4 @@
-"""API module placeholder for future FastAPI endpoints."""
+"""API module for FastAPI endpoints."""
+from .app import app
 
-__all__ = []
+__all__ = ["app"]
