@@ -35,12 +35,13 @@ This project implements a multi-phase RAG system with:
 - FastAPI REST endpoints
 - CLI query tools
 
-### 🔄 Phase 2: LangGraph Orchestration
+### ✅ Phase 2: LangGraph Orchestration (Complete)
 
 - Agentic RAG with adaptive retrieval
-- Multi-node graph workflow
-- Tool integration
-- Query rewriting and grading
+- Multi-node graph workflow (classify, retrieve, grade, rewrite, generate)
+- Tool integration (calculator, web search, HTTP fetch)
+- Query rewriting and document grading
+- Conditional routing and retry logic
 
 ### 🔄 Phase 3: LlamaIndex Integration
 
@@ -67,17 +68,24 @@ RAG-Prod-Level/
 │   ├── ingestion/       # Document loaders (PDF, web, text, Word)
 │   ├── processing/      # Chunking and embedding pipeline
 │   ├── retrieval/       # Document retrieval with caching
-│   ├── rag/             # RAG chain implementation
+│   ├── rag/             # RAG chain implementation (Phase 1)
+│   ├── graph/           # LangGraph agentic workflow (Phase 2)
+│   ├── tools/           # External tool integrations (Phase 2)
 │   └── api/             # FastAPI REST endpoints
 ├── scripts/
 │   ├── ingest_documents.py   # Document ingestion script
-│   ├── query_rag.py          # Interactive query CLI
+│   ├── query_rag.py          # Interactive query CLI (Phase 1)
+│   ├── test_agentic_rag.py   # Agentic RAG testing (Phase 2)
+│   ├── compare_rag_modes.py  # Compare Phase 1 vs 2 (Phase 2)
 │   └── run_server.py         # API server launcher
 ├── data/
 │   ├── raw/             # Raw documents
 │   └── processed/       # Processed chunks
 ├── cache/               # Local cache storage
 ├── docs/                # Documentation
+│   ├── quickstart.md    # Quick start guide
+│   ├── phase1.md        # Phase 1 details
+│   └── phase2.md        # Phase 2 details
 ├── tests/               # Test suite
 ├── .env.example         # Environment template
 ├── requirements.txt     # Python dependencies
@@ -218,7 +226,8 @@ pytest tests/
 ## 📚 Documentation
 
 - [Quick Start Guide](docs/quickstart.md)
-- [Phase 1 Details](docs/phase1.md)
+- [Phase 1 Details](docs/phase1.md) - Basic RAG Pipeline
+- [Phase 2 Details](docs/phase2.md) - Agentic RAG with LangGraph
 - [LangChain Documentation](https://python.langchain.com/)
 - [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [LlamaIndex Documentation](https://docs.llamaindex.ai/)
@@ -228,7 +237,7 @@ pytest tests/
 
 - [x] Phase 0: Tech stack configuration
 - [x] Phase 1: Basic RAG pipeline
-- [ ] Phase 2: Agentic orchestration
+- [x] Phase 2: Agentic orchestration
 - [ ] Phase 3: Advanced retrieval
 - [ ] Phase 4: Production features
 
@@ -238,6 +247,13 @@ MIT
 
 ---
 
-**Current Status:** Phase 1 Complete ✅
+**Current Status:** Phase 2 Complete ✅
 
-**Next:** Phase 2 - LangGraph Orchestration (Agentic RAG)
+**Features**:
+
+- ✅ Basic RAG with caching (Phase 1)
+- ✅ Agentic RAG with LangGraph (Phase 2)
+- ✅ Adaptive retrieval and query rewriting
+- ✅ Tool integrations (calculator, web search)
+
+**Next:** Phase 3 - LlamaIndex Integration (Advanced Retrieval)
