@@ -79,6 +79,12 @@ class Settings(BaseSettings):
     tavily_api_key: str = Field(default="")
     enable_web_search: bool = Field(default=False)
     
+    # LlamaIndex Configuration (Phase 3)
+    llamaindex_response_mode: Literal["compact", "refine", "tree_summarize", "simple_summarize"] = Field(default="compact")
+    llamaindex_use_router: bool = Field(default=False)
+    llamaindex_use_subquestion: bool = Field(default=False)
+    llamaindex_enable_hybrid: bool = Field(default=True)
+    
     @property
     def is_dev(self) -> bool:
         """Check if running in development mode."""
