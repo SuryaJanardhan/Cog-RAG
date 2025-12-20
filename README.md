@@ -7,6 +7,7 @@ trying to build one last solution on llm and advn rag pipeline where it can be l
 ## 🎯 Project Overview
 
 This project implements a multi-phase RAG system with:
+
 - **LangChain** for RAG primitives
 - **LangGraph** for agentic control flow
 - **LlamaIndex** for advanced retrieval experiments
@@ -17,6 +18,7 @@ This project implements a multi-phase RAG system with:
 ## 📋 Project Phases
 
 ### ✅ Phase 0: Tech Stack Setup (Current)
+
 - Framework configuration locked
 - Environment management with Pydantic settings
 - Vector database initialization (Qdrant/Chroma)
@@ -24,6 +26,7 @@ This project implements a multi-phase RAG system with:
 - Gemini LLM client wrapper
 
 ### 🔄 Phase 1: Basic RAG Pipeline
+
 - Document ingestion and processing
 - Chunking and embeddings
 - Vector retrieval
@@ -31,17 +34,20 @@ This project implements a multi-phase RAG system with:
 - FastAPI endpoint
 
 ### 🔄 Phase 2: LangGraph Orchestration
+
 - Agentic RAG with adaptive retrieval
 - Multi-node graph workflow
 - Tool integration
 - Query rewriting and grading
 
 ### 🔄 Phase 3: LlamaIndex Integration
+
 - Advanced indexes and routers
 - Sub-question decomposition
 - Config-driven retrieval
 
 ### 🔄 Phase 4: Production Hardening
+
 - Multi-tenant support
 - Live web search integration
 - Observability and tracing
@@ -79,11 +85,13 @@ RAG-Prod-Level/
 ### Installation
 
 1. **Clone and navigate to the project:**
+
 ```bash
 cd RAG-Prod-Level
 ```
 
 2. **Create and activate virtual environment:**
+
 ```bash
 python -m venv myenv
 # Windows
@@ -93,11 +101,13 @@ source myenv/bin/activate
 ```
 
 3. **Install dependencies:**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 4. **Configure environment:**
+
 ```bash
 cp .env.example .env
 # Edit .env with your API keys and configuration
@@ -128,19 +138,20 @@ This will verify all components are correctly configured.
 
 ## 🔧 Tech Stack
 
-| Component | Development | Production |
-|-----------|-------------|------------|
-| **LLM** | Gemini 1.5 Flash | Gemini 1.5 Flash/Pro |
-| **Vector DB** | Chroma (local) | Qdrant Cloud |
-| **Embedding Cache** | SQLite | Redis |
-| **Response Cache** | Redis | Redis/Postgres |
-| **Frameworks** | LangChain, LangGraph, LlamaIndex |
+| Component           | Development                      | Production           |
+| ------------------- | -------------------------------- | -------------------- |
+| **LLM**             | Gemini 1.5 Flash                 | Gemini 1.5 Flash/Pro |
+| **Vector DB**       | Chroma (local)                   | Qdrant Cloud         |
+| **Embedding Cache** | SQLite                           | Redis                |
+| **Response Cache**  | Redis                            | Redis/Postgres       |
+| **Frameworks**      | LangChain, LangGraph, LlamaIndex |
 
 ## 📝 Environment Variables
 
 See [.env.example](.env.example) for all available configuration options.
 
 Key variables:
+
 - `GEMINI_API_KEY` - Google Gemini API key
 - `VECTOR_DB` - Vector database choice (chroma/qdrant)
 - `ENVIRONMENT` - Running mode (dev/prod)
@@ -175,4 +186,3 @@ MIT
 ---
 
 **Current Status:** Phase 0 Complete ✅
-
