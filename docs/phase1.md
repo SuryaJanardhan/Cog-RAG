@@ -1,11 +1,13 @@
 # Phase 1: Basic RAG Pipeline
 
 ## Overview
+
 Phase 1 implements a complete RAG pipeline with LangChain, Gemini, and caching.
 
 ## Components
 
 ### 1. Document Ingestion (`src/ingestion/`)
+
 - **DocumentIngestion**: Loads various document types
   - PDF files via PyPDFLoader
   - Web pages via WebBaseLoader
@@ -15,6 +17,7 @@ Phase 1 implements a complete RAG pipeline with LangChain, Gemini, and caching.
 - Storage in `data/raw/` with metadata.json
 
 ### 2. Processing Pipeline (`src/processing/`)
+
 - **ChunkingPipeline**: RecursiveCharacterTextSplitter
   - Configurable chunk_size (default: 1000)
   - Configurable chunk_overlap (default: 200)
@@ -27,6 +30,7 @@ Phase 1 implements a complete RAG pipeline with LangChain, Gemini, and caching.
   - Document addition with embedding caching
 
 ### 3. Retrieval (`src/retrieval/`)
+
 - **CachedRetriever**: Configurable document retrieval
   - Top-K retrieval (default: 5)
   - Score threshold filtering (default: 0.7)
@@ -34,6 +38,7 @@ Phase 1 implements a complete RAG pipeline with LangChain, Gemini, and caching.
   - Document formatting and source extraction
 
 ### 4. RAG Chain (`src/rag/`)
+
 - **RAGChain**: Complete RAG pipeline
   - Context injection with prompt templates
   - Gemini chat model integration
@@ -45,6 +50,7 @@ Phase 1 implements a complete RAG pipeline with LangChain, Gemini, and caching.
   - Custom chain creation
 
 ### 5. API (`src/api/`)
+
 - **FastAPI Application**: REST API endpoints
   - `POST /query`: Single query with sources
   - `POST /query/batch`: Batch queries
@@ -56,30 +62,38 @@ Phase 1 implements a complete RAG pipeline with LangChain, Gemini, and caching.
 ## Usage
 
 ### 1. Configure Environment
+
 ```bash
 cp .env.example .env
 # Edit .env and add your GEMINI_API_KEY
 ```
 
 ### 2. Ingest Documents
+
 ```bash
 python scripts/ingest_documents.py
 ```
+
 This creates a sample document and stores it in the vector database.
 
 ### 3. Query via CLI
+
 ```bash
 python scripts/query_rag.py
 ```
+
 Interactive or batch query mode.
 
 ### 4. Run API Server
+
 ```bash
 python scripts/run_server.py
 ```
+
 Access API at http://localhost:8000/docs
 
 ### 5. Query via API
+
 ```bash
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
@@ -93,12 +107,14 @@ curl -X POST "http://localhost:8000/query" \
 ## Caching Architecture
 
 ### Embedding Cache
+
 - **Before embedding**: Check cache by text hash
 - **Storage**: SQLite (dev) or Redis (prod)
 - **Key**: SHA256 hash of text content
 - **Value**: Embedding vector as JSON
 
 ### Response Cache
+
 - **Before LLM**: Build cache key from (query + retrieved_doc_ids)
 - **Storage**: Redis or PostgreSQL
 - **Key**: SHA256 hash of query + sorted doc IDs
@@ -108,7 +124,9 @@ curl -X POST "http://localhost:8000/query" \
 ## API Endpoints
 
 ### POST /query
+
 Request:
+
 ```json
 {
   "query": "What is RAG?",
@@ -118,6 +136,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "answer": "RAG is...",
@@ -144,6 +163,7 @@ Response:
 ## Configuration
 
 Key settings in `.env`:
+
 - `GEMINI_API_KEY`: Required
 - `VECTOR_DB`: chroma (dev) or qdrant (prod)
 - `CHUNK_SIZE`: Default 1000
@@ -156,21 +176,25 @@ Key settings in `.env`:
 ## Testing Flow
 
 1. **Verify Phase 0**:
+
    ```bash
    python main.py
    ```
 
 2. **Ingest sample data**:
+
    ```bash
    python scripts/ingest_documents.py
    ```
 
 3. **Test queries**:
+
    ```bash
    python scripts/query_rag.py
    ```
 
 4. **Start API server**:
+
    ```bash
    python scripts/run_server.py
    ```
@@ -182,6 +206,7 @@ Key settings in `.env`:
 ## Next Steps
 
 Phase 1 provides a solid foundation. Ready for:
+
 - **Phase 2**: Add LangGraph for agentic RAG
 - **Phase 3**: Integrate LlamaIndex for advanced retrieval
 - **Phase 4**: Production hardening and scaling

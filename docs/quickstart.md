@@ -1,6 +1,7 @@
 # Quick Start Guide
 
 ## Prerequisites
+
 - Python 3.10+
 - Google Gemini API key ([Get one here](https://ai.google.dev/))
 - (Optional) Redis for caching
@@ -9,6 +10,7 @@
 ## Installation
 
 ### 1. Setup Virtual Environment
+
 ```bash
 # Windows
 python -m venv myenv
@@ -20,11 +22,13 @@ source myenv/bin/activate
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Configure Environment
+
 ```bash
 # Copy example environment file
 cp .env.example .env
@@ -34,6 +38,7 @@ cp .env.example .env
 ```
 
 Minimum `.env` configuration:
+
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 ENVIRONMENT=dev
@@ -57,6 +62,7 @@ python scripts/ingest_documents.py
 ```
 
 This will:
+
 - Create a sample document about RAG systems
 - Chunk it into smaller pieces
 - Generate embeddings (with caching)
@@ -69,6 +75,7 @@ python scripts/query_rag.py
 ```
 
 Try questions like:
+
 - "What is RAG?"
 - "What are the key components of a RAG system?"
 - "What are the benefits of using RAG?"
@@ -80,6 +87,7 @@ python scripts/run_server.py
 ```
 
 Access the API:
+
 - Interactive docs: http://localhost:8000/docs
 - Alternative docs: http://localhost:8000/redoc
 - Health check: http://localhost:8000/health
@@ -87,6 +95,7 @@ Access the API:
 ### Step 4: Query via API
 
 Using curl:
+
 ```bash
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
@@ -98,6 +107,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 Using Python:
+
 ```python
 import requests
 
@@ -143,14 +153,17 @@ RAG-Prod-Level/
 ## Common Issues
 
 ### "GEMINI_API_KEY not found"
+
 - Make sure you created `.env` file
 - Add `GEMINI_API_KEY=your_key` to `.env`
 
 ### "No module named 'src'"
+
 - Run scripts from project root directory
 - Make sure virtual environment is activated
 
 ### "Connection refused" (Redis)
+
 - If using Redis cache, make sure Redis is running
 - Or switch to SQLite cache in `.env`:
   ```env
@@ -164,21 +177,25 @@ RAG-Prod-Level/
   ```
 
 ### Chroma initialization issues
+
 - Delete `data/chroma_db/` folder
 - Re-run ingestion script
 
 ## Next Steps
 
 1. **Add your own documents**:
+
    - Place PDFs in `data/raw/`
    - Update `scripts/ingest_documents.py`
    - Re-run ingestion
 
 2. **Customize prompts**:
+
    - Edit `src/rag/chain.py`
    - Modify `DEFAULT_RAG_TEMPLATE`
 
 3. **Adjust retrieval**:
+
    - Change `RETRIEVAL_TOP_K` in `.env`
    - Adjust `RETRIEVAL_SCORE_THRESHOLD`
 

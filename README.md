@@ -150,6 +150,7 @@ This will verify all components are correctly configured.
 ### Running Phase 1: Basic RAG
 
 #### 1. Ingest Documents
+
 ```bash
 python scripts/ingest_documents.py
 ```
@@ -157,6 +158,7 @@ python scripts/ingest_documents.py
 Creates a sample document and stores it in the vector database.
 
 #### 2. Query via CLI
+
 ```bash
 python scripts/query_rag.py
 ```
@@ -164,16 +166,19 @@ python scripts/query_rag.py
 Interactive query mode with cache statistics.
 
 #### 3. Run API Server
+
 ```bash
 python scripts/run_server.py
 ```
 
 Access API at:
+
 - Interactive docs: http://localhost:8000/docs
 - Health check: http://localhost:8000/health
 - Stats: http://localhost:8000/stats
 
 #### 4. Query via API
+
 ```bash
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
