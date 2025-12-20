@@ -302,6 +302,7 @@ python scripts/tenant_demo.py
 ```
 
 Demonstrates:
+
 - Tenant creation and management
 - API key generation and validation
 - Background task submission
@@ -315,6 +316,7 @@ python scripts/load_test.py
 ```
 
 Tests:
+
 - Concurrent request handling
 - Rate limit enforcement
 - Multi-tenant isolation
@@ -333,6 +335,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 Response includes rate limit headers:
+
 - `X-RateLimit-Limit-Minute`
 - `X-RateLimit-Remaining-Minute`
 - `X-RateLimit-Limit-Hour`

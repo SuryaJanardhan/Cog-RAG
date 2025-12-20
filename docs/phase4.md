@@ -28,12 +28,14 @@ src/
 ### 1. Multi-Tenant Architecture
 
 **Tenant Management:**
+
 - Tenant creation with configurable plans (free, pro, enterprise)
 - Resource limits per plan (documents, queries/day)
 - Tenant activation/deactivation
 - Email-based identification
 
 **API Key Management:**
+
 - Secure API key generation (SHA-256 hashing)
 - Per-key rate limiting configuration
 - Key activation/revocation
@@ -42,6 +44,7 @@ src/
 **Resource Isolation Strategies:**
 
 **Collection-based isolation (recommended):**
+
 ```python
 # Each tenant gets separate vector collection
 tenant = manager.create_tenant(
@@ -53,6 +56,7 @@ tenant = manager.create_tenant(
 ```
 
 **Filter-based isolation:**
+
 ```python
 # Shared collection with metadata filtering
 tenant = manager.create_tenant(
@@ -100,6 +104,7 @@ collection_name = manager.get_collection_name(tenant.id)
 ### 2. Background Workers
 
 **Task Queue System:**
+
 - Async task processing with asyncio
 - Multiple concurrent workers
 - Task status tracking (pending, running, completed, failed)
@@ -109,6 +114,7 @@ collection_name = manager.get_collection_name(tenant.id)
 **Supported Tasks:**
 
 **Document Ingestion:**
+
 ```python
 from src.workers import get_task_queue, create_document_worker
 
@@ -136,6 +142,7 @@ print(f"Progress: {task.progress}%")
 ```
 
 **Batch Ingestion:**
+
 ```python
 task = queue.submit_task(
     task_type="ingest_batch",
@@ -148,6 +155,7 @@ task = queue.submit_task(
 ```
 
 **Vector Indexing:**
+
 ```python
 from src.workers import create_indexing_worker
 
@@ -164,6 +172,7 @@ task = queue.submit_task(
 ```
 
 **Worker Pool:**
+
 ```python
 # Start workers
 await queue.start_worker(num_workers=4)
@@ -176,6 +185,7 @@ queue.stop_worker()
 ### 3. Rate Limiting
 
 **Multi-Level Limits:**
+
 - Per minute
 - Per hour
 - Per day
@@ -205,6 +215,7 @@ print(f"Requests: {usage['requests']}")
 ```
 
 **FastAPI Middleware:**
+
 ```python
 from fastapi import FastAPI
 from src.api.rate_limit import RateLimitMiddleware
@@ -220,12 +231,15 @@ app.add_middleware(RateLimitMiddleware)
 ```
 
 **Rate Limit Response:**
+
 ```json
 {
   "detail": "Rate limit exceeded. Try again in 42 seconds."
 }
 ```
+
 Headers:
+
 - `HTTP 429 Too Many Requests`
 - `Retry-After: 42`
 
@@ -253,6 +267,7 @@ print(f"Avg response time: {current['avg_response_time_ms']}ms")
 ```
 
 **Available Metrics:**
+
 - `requests_total` - Total API requests
 - `requests_by_tenant` - Requests per tenant
 - `errors_total` - Total errors
@@ -288,6 +303,7 @@ logger.error(
 ```
 
 **Output (JSON):**
+
 ```json
 {
   "message": "Query processed successfully",
@@ -392,6 +408,7 @@ TENANT_STORAGE_PATH=./data/tenants.json
 ### Prerequisites
 
 1. **Infrastructure:**
+
    - Load balancer (NGINX, AWS ALB)
    - Multiple API server instances
    - Redis for distributed caching and rate limiting
@@ -406,6 +423,7 @@ TENANT_STORAGE_PATH=./data/tenants.json
 ### Deployment Steps
 
 **1. Configure Environment:**
+
 ```bash
 # Copy and configure .env
 cp .env.example .env
@@ -419,6 +437,7 @@ ENABLE_MULTI_TENANT=true
 ```
 
 **2. Initialize Infrastructure:**
+
 ```bash
 # Start Redis
 docker run -d -p 6379:6379 redis:latest
@@ -430,6 +449,7 @@ docker run -d -p 5432:5432 \
 ```
 
 **3. Start Worker Pool:**
+
 ```python
 # workers_server.py
 import asyncio
@@ -437,15 +457,15 @@ from src.workers import get_task_queue, create_document_worker, create_indexing_
 
 async def main():
     queue = get_task_queue()
-    
+
     # Register handlers
     doc_worker = create_document_worker()
     index_worker = create_indexing_worker()
-    
+
     queue.register_handler("ingest_document", doc_worker.ingest_document)
     queue.register_handler("ingest_batch", doc_worker.ingest_batch)
     queue.register_handler("index_documents", index_worker.index_documents)
-    
+
     # Start workers
     await queue.start_worker(num_workers=4)
 
@@ -454,6 +474,7 @@ if __name__ == "__main__":
 ```
 
 **4. Start API Servers:**
+
 ```bash
 # Server 1
 gunicorn src.api.app:app \
@@ -469,6 +490,7 @@ gunicorn src.api.app:app \
 ```
 
 **5. Configure Load Balancer (NGINX):**
+
 ```nginx
 upstream rag_api {
     server localhost:8000;
@@ -478,7 +500,7 @@ upstream rag_api {
 server {
     listen 80;
     server_name api.yourcompany.com;
-    
+
     location / {
         proxy_pass http://rag_api;
         proxy_set_header Host $host;
@@ -496,6 +518,7 @@ python scripts/tenant_demo.py
 ```
 
 Tests:
+
 - Tenant creation
 - API key generation
 - Background task submission
@@ -509,6 +532,7 @@ python scripts/load_test.py
 ```
 
 Tests:
+
 - Concurrent requests
 - Rate limit enforcement
 - Multi-tenant isolation
@@ -576,18 +600,21 @@ Tests:
 ### Key Metrics to Track
 
 1. **System Health:**
+
    - API uptime (99.9%+ target)
    - Error rate (<1% target)
    - Average response time (<200ms target)
    - P95 response time (<500ms target)
 
 2. **Business Metrics:**
+
    - Active tenants
    - Queries per day
    - Documents indexed
    - Cache hit rate (>80% target)
 
 3. **Resource Utilization:**
+
    - CPU usage
    - Memory usage
    - Disk usage
@@ -604,6 +631,7 @@ Tests:
 ### Common Issues
 
 **1. Rate Limiting Not Working:**
+
 ```python
 # Check if middleware is registered
 from src.api.rate_limit import RateLimitMiddleware
@@ -615,6 +643,7 @@ print(f"Rate limit: {api_key.rate_limit_per_minute}/min")
 ```
 
 **2. Background Tasks Not Processing:**
+
 ```python
 # Check worker status
 queue = get_task_queue()
@@ -627,6 +656,7 @@ print(f"Pending tasks: {len(pending)}")
 ```
 
 **3. Tenant Isolation Issues:**
+
 ```python
 # Verify collection name
 collection = manager.get_collection_name(tenant_id)
@@ -642,6 +672,7 @@ print(f"Isolation mode: {tenant.isolation_mode}")
 ### From Phase 3 to Phase 4
 
 **1. Add Multi-Tenant Support:**
+
 ```python
 # Before (global access)
 from src.rag import create_rag_pipeline
@@ -660,6 +691,7 @@ response = pipeline.query("What is RAG?")
 ```
 
 **2. Enable Rate Limiting:**
+
 ```python
 # Add to app.py
 from src.api.rate_limit import RateLimitMiddleware
@@ -668,6 +700,7 @@ app.add_middleware(RateLimitMiddleware)
 ```
 
 **3. Add Authentication:**
+
 ```python
 # Protect endpoints
 from src.tenants.auth import get_current_tenant
@@ -698,6 +731,7 @@ async def query(
 ## Next Steps (Post-Phase 4)
 
 **Production Enhancements:**
+
 1. Redis-based distributed rate limiting
 2. PostgreSQL for tenant/task persistence
 3. Kubernetes deployment configs
@@ -708,6 +742,7 @@ async def query(
 8. Advanced analytics dashboard
 
 **Feature Additions:**
+
 1. Usage-based billing integration
 2. Webhook notifications
 3. Real-time collaboration
