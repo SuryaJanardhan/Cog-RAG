@@ -2,7 +2,7 @@
 LangGraph workflow builder for agentic RAG.
 Defines the graph structure with conditional edges and routing.
 """
-from typing import Literal
+from typing import Literal, Optional
 from langgraph.graph import StateGraph, END
 
 from .state import GraphState, create_initial_state
@@ -12,9 +12,14 @@ from .nodes import create_nodes, MAX_RETRIES
 class AgenticRAGGraph:
     """Agentic RAG workflow using LangGraph."""
     
-    def __init__(self):
-        """Initialize the graph with nodes."""
-        self.nodes = create_nodes()
+    def __init__(self, use_llamaindex: bool = False):
+        """
+        Initialize the graph with nodes.
+        
+        Args:
+            use_llamaindex: Whether to use LlamaIndex for retrieval
+        """
+        self.nodes = create_nodes(use_llamaindex=use_llamaindex)
         self.graph = self._build_graph()
         self.app = self.graph.compile()
     

@@ -10,6 +10,7 @@ import json
 from ..graph.state import GraphState
 from ..llm import get_gemini_client
 from ..retrieval import create_retriever
+from ..config.settings import get_settings
 
 
 # Maximum retry attempts for query rewriting
@@ -75,11 +76,32 @@ Answer:"""
 class RAGNodes:
     """LangGraph node implementations for agentic RAG."""
     
-    def __init__(self):
-        """Initialize nodes with LLM and retriever."""
+    def __init__(self, use_llamaindex: bool = False):
+        """
+        Initialize nodes with LLM and retriever.
+        
+        Args:
+            use_llamaindex: Whether to use LlamaIndex for retrieval
+        """
+        self.settings = get_settings()
         self.llm_client = get_gemini_client()
         self.llm = self.llm_client.chat_model
+        self.use_llamaindex = use_llamaindex or self.settings.llamaindex_enable_hybrid
+        
+        # Initialize retrievers
         self.retriever = create_retriever()
+        self.llamaindex_retriever = None
+        
+        if self.use_llamaindex:
+            try:
+                from ..llamaindex import LlamaIndexManager
+                self.llamaindex_manager = LlamaIndexManager()
+                self.llamaindex_manager.create_index()
+                self.llamaindex_retriever = self.llamaindex_manager.get_retriever()
+                print("[INIT] LlamaIndex retriever initialized")
+            except Exception as e:
+                print(f"[INIT] LlamaIndex initialization failed: {e}. Falling back to LangChain.")
+                self.use_llamaindex = False
     
     def classify_or_answer(self, state: GraphState) -> GraphState:
         """
@@ -123,12 +145,21 @@ class RAGNodes:
         """
         Retrieve relevant documents.
         
-        Node that performs vector similarity search.
+        Node that performs vector similarity search using LangChain or LlamaIndex.
         """
         print(f"\n[RETRIEVE] Fetching documents for: {state['question'][:100]}...")
         
         try:
-            documents = self.retriever.retrieve(state["question"])
+            # Choose retriever based on configuration
+            if self.use_llamaindex and self.llamaindex_retriever:
+                print("[RETRIEVE] Using LlamaIndex retriever")
+                nodes = self.llamaindex_retriever.retrieve(state["question"])
+                # Convert LlamaIndex nodes to documents
+                documents = [{"content": node.get_content(), "score": node.score} for node in nodes]
+            else:
+                print("[RETRIEVE] Using LangChain retriever")
+                documents = self.retriever.retrieve(state["question"])
+            
             state["documents"] = documents
             state["retrieval_attempted"] = True
             
@@ -276,6 +307,14 @@ class RAGNodes:
         return state
 
 
-def create_nodes() -> RAGNodes:
-    """Factory function to create node instances."""
-    return RAGNodes()
+def create_nodes(use_llamaindex: bool = False) -> RAGNodes:
+    """
+    Factory function to create node instances.
+    
+    Args:
+        use_llamaindex: Whether to use LlamaIndex for retrieval
+        
+    Returns:
+        RAGNodes instance
+    """
+    return RAGNodes(use_llamaindex=use_llamaindex)
