@@ -10,17 +10,6 @@ from langchain_core.documents import Document
 class GraphState(TypedDict):
     """
     State for the agentic RAG graph.
-    
-    Attributes:
-        question: The original user question
-        documents: Retrieved documents (if any)
-        answer: Generated answer
-        retry_count: Number of query rewrites attempted
-        needs_retrieval: Whether retrieval is needed
-        retrieval_attempted: Whether retrieval has been tried
-        use_tools: Whether to use external tools
-        tool_results: Results from tool calls
-        error: Any error that occurred
     """
     question: str
     documents: Annotated[List[Document], add]  # Supports appending
@@ -31,6 +20,13 @@ class GraphState(TypedDict):
     use_tools: bool
     tool_results: Optional[str]
     error: Optional[str]
+    
+    # Phase 2 Agentic extensions
+    plan: Optional[List[str]]
+    current_step_idx: int
+    cache_hit: bool
+    human_approval_required: bool
+    human_approved: bool
 
 
 def create_initial_state(question: str) -> GraphState:
@@ -52,5 +48,10 @@ def create_initial_state(question: str) -> GraphState:
         retrieval_attempted=False,
         use_tools=False,
         tool_results=None,
-        error=None
+        error=None,
+        plan=None,
+        current_step_idx=0,
+        cache_hit=False,
+        human_approval_required=False,
+        human_approved=False
     )

@@ -1,4 +1,4 @@
 """Configuration module for RAG application."""
-from .settings import settings
+from .settings import settings, get_settings
 
-__all__ = ["settings"]
+__all__ = ["settings", "get_settings"]

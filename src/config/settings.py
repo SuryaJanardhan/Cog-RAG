@@ -84,6 +84,17 @@ class Settings(BaseSettings):
     llamaindex_use_router: bool = Field(default=False)
     llamaindex_use_subquestion: bool = Field(default=False)
     llamaindex_enable_hybrid: bool = Field(default=True)
+
+    # Advanced RAG Configurations (Phases 1-3)
+    enable_parent_document_retrieval: bool = Field(default=False)
+    enable_reranking: bool = Field(default=False)
+    reranker_model: str = Field(default="gemini") # gemini or local
+    enable_hybrid_search: bool = Field(default=False)
+    presidio_enabled: bool = Field(default=False)
+    eval_enabled: bool = Field(default=False)
+    neo4j_url: str = Field(default="bolt://localhost:7687")
+    neo4j_username: str = Field(default="neo4j")
+    neo4j_password: str = Field(default="password")
     
     @property
     def is_dev(self) -> bool:
@@ -100,6 +111,33 @@ class Settings(BaseSettings):
         """Generate PostgreSQL connection URL."""
         return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
+    # LlamaIndex compatible property wrappers
+    @property
+    def temperature(self) -> float:
+        return self.gemini_temperature
+
+    @property
+    def qdrant_path(self) -> str:
+        return "./data/qdrant_db"
+
+    @property
+    def qdrant_collection(self) -> str:
+        return self.qdrant_collection_name
+
+    @property
+    def chroma_persist_dir(self) -> str:
+        return self.chroma_persist_directory
+
+    @property
+    def chroma_collection(self) -> str:
+        return self.qdrant_collection_name
+
 
 # Global settings instance
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Get global settings instance."""
+    return settings
+

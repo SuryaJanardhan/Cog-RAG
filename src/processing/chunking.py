@@ -234,7 +234,17 @@ class DocumentProcessingPipeline:
             dict: Processing statistics
         """
         # Step 1: Chunk documents
-        chunks = self.chunking.chunk_documents(documents)
+        if settings.enable_parent_document_retrieval:
+            from ..retrieval.parent_retriever import ParentDocumentSplitter
+            splitter = ParentDocumentSplitter(
+                parent_size=settings.chunk_size * 2,
+                parent_overlap=settings.chunk_overlap * 2,
+                child_size=settings.chunk_size // 2,
+                child_overlap=settings.chunk_overlap // 4
+            )
+            chunks = splitter.split_and_store(documents)
+        else:
+            chunks = self.chunking.chunk_documents(documents)
         
         # Step 2: Add to vector store (embeddings generated automatically)
         doc_ids = self.vector_store.add_documents(chunks, use_cache=use_cache)

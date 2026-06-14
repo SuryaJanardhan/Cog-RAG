@@ -239,10 +239,60 @@ class PostgresResponseCache(ResponseCache):
         conn.close()
 
 
+class SQLiteResponseCache(ResponseCache):
+    """SQLite-based response cache for offline/local development."""
+    def __init__(self, db_path: str = "./data/response_cache.db"):
+        self.db_path = db_path
+        self._initialize_db()
+        
+    def _initialize_db(self) -> None:
+        import os
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS response_cache (
+                cache_key TEXT PRIMARY KEY,
+                query TEXT NOT NULL,
+                doc_ids TEXT NOT NULL,
+                response TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+    def get(self, query: str, doc_ids: List[str]) -> Optional[str]:
+        cache_key = self._generate_cache_key(query, doc_ids)
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT response FROM response_cache WHERE cache_key = ?", (cache_key,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return row[0]
+        return None
+
+    def set(self, query: str, doc_ids: List[str], response: str) -> None:
+        cache_key = self._generate_cache_key(query, doc_ids)
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT OR REPLACE INTO response_cache (cache_key, query, doc_ids, response) VALUES (?, ?, ?, ?)",
+            (cache_key, query, json.dumps(doc_ids), response)
+        )
+        conn.commit()
+        conn.close()
+
+
 def get_embedding_cache() -> EmbeddingCache:
     """Factory function to get embedding cache based on configuration."""
     if settings.embedding_cache_type == "redis":
-        return RedisEmbeddingCache()
+        try:
+            return RedisEmbeddingCache()
+        except Exception as e:
+            print(f"[CACHE] Redis embedding cache failed to initialize: {e}. Falling back to SQLite.")
+            return SQLiteEmbeddingCache()
     else:
         return SQLiteEmbeddingCache()
 
@@ -250,9 +300,19 @@ def get_embedding_cache() -> EmbeddingCache:
 def get_response_cache() -> ResponseCache:
     """Factory function to get response cache based on configuration."""
     if settings.response_cache_type == "postgres":
-        return PostgresResponseCache()
+        try:
+            return PostgresResponseCache()
+        except Exception as e:
+            print(f"[CACHE] Postgres response cache failed to initialize: {e}. Falling back to SQLite.")
+            return SQLiteResponseCache()
+    elif settings.response_cache_type == "redis":
+        try:
+            return RedisResponseCache()
+        except Exception as e:
+            print(f"[CACHE] Redis response cache failed to initialize: {e}. Falling back to SQLite.")
+            return SQLiteResponseCache()
     else:
-        return RedisResponseCache()
+        return SQLiteResponseCache()
 
 
 # Global cache instances
