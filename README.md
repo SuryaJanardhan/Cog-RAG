@@ -1,407 +1,142 @@
-# RAG Production-Level System
+# Aegis RAG — Production-Grade Autonomous Retrieval Engine
 
-A production-ready Retrieval-Augmented Generation (RAG) system built with LangChain, LangGraph, LlamaIndex, and Google Gemini.
+Aegis RAG is a production-ready, highly reliable, and multi-tenant Retrieval-Augmented Generation (RAG) system. It combines the structured workflow of **LangGraph**, the retrieval index efficiency of **LlamaIndex**, and the model reasoning capabilities of **Google Gemini** into a unified cognitive engine.
 
-trying to build one last solution on llm and advn rag pipeline where it can be later used as a ready to prod level scalable and reliable system in any segment with custom config :::
+```mermaid
+graph TD
+    User([User Client]) --> |HTTP POST /query| API[FastAPI Server]
+    API --> |Lookup| Cache{Semantic Cache}
+    
+    Cache --> |Hit| Return[Cached Response]
+    Cache --> |Miss| Graph[LangGraph Agentic Flow]
+    
+    Graph --> Classify[Query Classifier Node]
+    Classify --> |Complex| Planner[Plan-and-Solve Planner]
+    Classify --> |Simple| Retriever[Adaptive Retriever]
+    
+    Planner --> |Formulates Steps| Loop[Execution Loop]
+    Loop --> |Step 1: SQL/Math| Tools[Tool Registry]
+    Loop --> |Step 2: Context| Retriever
+    
+    Retriever --> |Dense + Sparse| Hybrid[Hybrid Search & RRF]
+    Hybrid --> |Chroma/Qdrant| VectorStore[(Vector Database)]
+    
+    Retriever --> Rerank[Cross-Encoder Reranker]
+    Rerank --> Grade[Document Relevance Grader]
+    
+    Grade --> |Irrelevant| Rewrite[Query Rewriter]
+    Rewrite --> Retriever
+    
+    Grade --> |Relevant| Synthesis[Response Synthesis]
+    
+    Synthesis --> Guardrail[Output Guardrails & Masker]
+    Guardrail --> API
+    Return --> User
+```
 
-## 🎯 Project Overview
+---
 
-This project implements a multi-phase RAG system with:
+## 🎯 Key Capabilities
 
-- **LangChain** for RAG primitives
-- **LangGraph** for agentic control flow
-- **LlamaIndex** for advanced retrieval experiments
-- **Google Gemini** as the primary LLM
-- **Qdrant** (prod) / **Chroma** (dev) for vector storage
-- **Redis** / **SQLite** for caching
+- **Adaptive Semantic Retrieval**: Dynamically routes requests between instant cache matching, standard document retrieval, and complex agentic tool usage based on classification.
+- **Plan-and-Solve Reasoning Loop**: Solves multi-layered questions by generating an execution plan, utilizing specific database and calculations tools, and merging insights dynamically.
+- **Advanced Dense-Sparse Hybrid Search**: Merges vector database query results (Chroma/Qdrant) and BM25 sparse lexical search scores using Reciprocal Rank Fusion (RRF) and Cross-Encoder reranking.
+- **Enterprise Hardening**:
+  - **Multi-Tenant Isolation**: Cryptographically secure resource separation with API key authorization.
+  - **Rate Limiting**: Configurable token bucket rate limiting on request volume.
+  - **Guardrails**: Integrated PII masking, query filters, and hallucination checks.
+  - **Observability**: Direct OpenTelemetry metrics exporter integration and LangSmith tracing.
+- **Modern Web Portal**: A next-generation Next.js client interface styled with a bespoke, warm-charcoal and gold color scheme (no generic neon vibe-coded themes).
 
-## 📋 Project Phases
-
-### ✅ Phase 0: Tech Stack Setup (Complete)
-
-- Framework configuration locked
-- Environment management with Pydantic settings
-- Vector database initialization (Qdrant/Chroma)
-- Cache layer setup (Redis/SQLite/Postgres)
-- Gemini LLM client wrapper
-
-### ✅ Phase 1: Basic RAG Pipeline (Complete)
-
-- Document ingestion and processing
-- Chunking and embeddings with caching
-- Vector retrieval with score thresholding
-- RAG chain with context injection
-- Response caching
-- FastAPI REST endpoints
-- CLI query tools
-
-### ✅ Phase 2: LangGraph Orchestration (Complete)
-
-- Agentic RAG with adaptive retrieval
-- Multi-node graph workflow (classify, retrieve, grade, rewrite, generate)
-- Tool integration (calculator, web search, HTTP fetch)
-- Query rewriting and document grading
-- Conditional routing and retry logic
-
-### ✅ Phase 3: LlamaIndex Integration (Complete)
-
-- VectorStoreIndex with Qdrant/Chroma backend
-- Advanced query engines (Compact, Refine, Tree Summarize)
-- Router engine for multi-source selection
-- Sub-question decomposition for complex queries
-- Hybrid engine with automatic mode selection
-- LangChain tool wrappers for LangGraph integration
-- Integrated with Phase 2 agentic workflow
-
-### ✅ Phase 4: Production Hardening (Complete)
-
-- Multi-tenant architecture with resource isolation
-- API key authentication and management
-- Background task queue for async processing
-- Rate limiting middleware (per-minute/hour/day)
-- LangSmith tracing integration
-- Structured logging and metrics collection
-- Production deployment configurations
+---
 
 ## 🏗️ Project Structure
 
 ```
 RAG-Prod-Level/
 ├── src/
-│   ├── config/          # Settings and environment configuration
-│   ├── db/              # Vector database clients (Qdrant, Chroma)
-│   ├── cache/           # Embedding and response caching
-│   ├── llm/             # Gemini LLM wrapper
-│   ├── ingestion/       # Document loaders (PDF, web, text, Word)
-│   ├── processing/      # Chunking and embedding pipeline
-│   ├── retrieval/       # Document retrieval with caching
-│   ├── rag/             # RAG chain implementation (Phase 1)
-│   ├── graph/           # LangGraph agentic workflow (Phase 2)
-│   ├── tools/           # External tool integrations (Phase 2)
-│   ├── llamaindex/      # LlamaIndex integration (Phase 3)
-│   ├── tenants/         # Multi-tenant management (Phase 4)
-│   ├── workers/         # Background task queue (Phase 4)
-│   └── api/             # FastAPI REST endpoints + observability
-├── scripts/
-│   ├── ingest_documents.py   # Document ingestion script
-│   ├── query_rag.py          # Interactive query CLI (Phase 1)
-│   ├── test_agentic_rag.py   # Agentic RAG testing (Phase 2)
-│   ├── compare_rag_modes.py  # Compare Phase 1 vs 2 (Phase 2)
-│   ├── test_llamaindex.py    # LlamaIndex testing (Phase 3)
-│   ├── compare_retrievers.py # Compare retrievers (Phase 3)
-│   ├── tenant_demo.py        # Multi-tenant demo (Phase 4)
-│   ├── load_test.py          # Load testing (Phase 4)
-│   └── run_server.py         # API server launcher
-├── data/
-│   ├── raw/             # Raw documents
-│   └── processed/       # Processed chunks
-├── cache/               # Local cache storage
-├── docs/                # Documentation
-│   ├── quickstart.md    # Quick start guide
-│   ├── phase1.md        # Phase 1 details
-│   ├── phase2.md        # Phase 2 details
-│   ├── phase3.md        # Phase 3 details
-│   └── phase4.md        # Phase 4 production guide
-├── tests/               # Test suite
-├── .env.example         # Environment template
-├── requirements.txt     # Python dependencies
-└── main.py             # Application entry point
+│   ├── api/             # FastAPI REST endpoints & observability
+│   ├── cache/           # Semantic SQLite & Redis caches
+│   ├── config/          # Central settings & Pydantic config
+│   ├── db/              # Vector database layers (Qdrant & Chroma)
+│   ├── graph/           # LangGraph Agent nodes & workflow state
+│   ├── ingestion/       # CDC synchronizer & document parsers
+│   ├── llamaindex/      # LlamaIndex query engine & router wrappers
+│   ├── llm/             # Gemini API client interface
+│   ├── processing/      # Chunking pipeline & embedding models
+│   ├── retrieval/       # Parent retriever & BM25 / Rerank modules
+│   ├── tenants/         # Multi-tenant resource managers
+│   └── tools/           # Calculator, Web Search & database tools
+├── frontend/            # Next.js web application
+│   ├── src/app/         # Next.js page routing & components
+│   └── package.json     # Node.js configurations
+├── data/                # Ingestion source files & storage
+├── tests/               # Pytest verification suites
+├── main.py              # System entry check script
+└── requirements.txt     # Python backend dependencies
 ```
 
-## 🚀 Getting Started
+---
+
+## 🚀 Installation & Running
 
 ### Prerequisites
-
 - Python 3.10+
+- Node.js 18+ & npm 9+
 - Google Gemini API key
-- (Optional) Qdrant Cloud account for production
-- (Optional) Redis for caching
 
-### Installation
-
-1. **Clone and navigate to the project:**
-
-```bash
-cd RAG-Prod-Level
-```
-
-2. **Create and activate virtual environment:**
-
-```bash
-python -m venv myenv
-# Windows
-myenv\Scripts\activate
-# Linux/Mac
-source myenv/bin/activate
-```
-
-3. **Install dependencies:**
-
-```bash
-pip install -r requirements.txt
-```
-
-4. **Configure environment:**
-
-```bash
-cp .env.example .env
-# Edit .env with your API keys and configuration
-```
-
-### Configuration
-
-Edit `.env` file with your settings:
-
-```env
-# Required
-GEMINI_API_KEY=your_api_key_here
-
-# Choose environment
-ENVIRONMENT=dev  # or prod
-
-# Vector DB (dev uses Chroma, prod uses Qdrant)
-VECTOR_DB=chroma  # or qdrant
-```
-
-### Running Phase 0 Verification
-
-```bash
-python main.py
-```
-
-This will verify all components are correctly configured.
-
-### Running Phase 1: Basic RAG
-
-#### 1. Ingest Documents
-
-```bash
-python scripts/ingest_documents.py
-```
-
-Creates a sample document and stores it in the vector database.
-
-#### 2. Query via CLI
-
-```bash
-python scripts/query_rag.py
-```
-
-Interactive query mode with cache statistics.
-
-#### 3. Run API Server
-
-```bash
-python scripts/run_server.py
-```
-
-Access API at:
-
-- Interactive docs: http://localhost:8000/docs
-- Health check: http://localhost:8000/health
-- Stats: http://localhost:8000/stats
-
-#### 4. Query via API
-
-```bash
-curl -X POST "http://localhost:8000/query" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is RAG?", "user_id": "test", "return_sources": true}'
-```
-
-### Running Phase 2: Agentic RAG
-
-#### 1. Test Agentic Behavior
-
-```bash
-python scripts/test_agentic_rag.py
-```
-
-Interactive testing of LangGraph-based agentic RAG with:
-
-- Adaptive retrieval decisions
-- Query rewriting
-- Document grading
-
-#### 2. Compare Basic vs Agentic
-
-```bash
-python scripts/compare_rag_modes.py
-```
-
-Side-by-side comparison of Phase 1 and Phase 2 approaches.
-
-#### 3. Use Agentic Mode in API
-
-```bash
-curl -X POST "http://localhost:8000/query" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "How does it work?", "use_agentic": true}'
-```
-
-The agentic mode will:
-
-- Decide if retrieval is needed
-- Rewrite unclear queries
-- Grade document relevance
-- Retry with better queries if needed
-
-### Running Phase 3: LlamaIndex Integration
-
-#### 1. Test Advanced Query Engines
-
-```bash
-python scripts/test_llamaindex.py
-```
-
-Tests all query engines:
-
-- Compact response synthesis
-- Refine mode for detailed answers
-- Tree summarize for overviews
-- Router engine for multi-source selection
-- Sub-question decomposition
-- LangChain tool wrappers
-
-Includes interactive mode for experimentation.
-
-#### 2. Compare Retrievers
-
-```bash
-python scripts/compare_retrievers.py
-```
-
-Benchmarks:
-
-- LangChain retriever (Phase 1)
-- LlamaIndex Compact engine
-- LlamaIndex Refine engine
-
-Shows performance and quality trade-offs.
-
-#### 3. Use LlamaIndex in Agentic Mode
-
-```bash
-# Enable in .env
-LLAMAINDEX_ENABLE_HYBRID=true
-
-# Query with agentic mode (uses LlamaIndex retriever)
-curl -X POST "http://localhost:8000/query" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "Explain RAG", "use_agentic": true}'
-```
-
-When `LLAMAINDEX_ENABLE_HYBRID=true`, the agentic workflow uses LlamaIndex for advanced retrieval and synthesis.
-
-### Running Phase 4: Production Features
-
-#### 1. Multi-Tenant Demo
-
-```bash
-python scripts/tenant_demo.py
-```
-
-Demonstrates:
-
-- Tenant creation and management
-- API key generation and validation
-- Background task submission
-- Rate limiting behavior
-- Observability features
-
-#### 2. Load Testing
-
-```bash
-python scripts/load_test.py
-```
-
-Tests:
-
-- Concurrent request handling
-- Rate limit enforcement
-- Multi-tenant isolation
-- Performance metrics
-
-#### 3. Production API with Authentication
-
-```bash
-# Create tenant and get API key
-python scripts/tenant_demo.py
-
-# Use API key in requests
-curl -X POST "http://localhost:8000/query" \
-  -H "X-API-Key: rag_xxxxxxxxxxxxx" \
-  -d '{"query": "What is RAG?"}'
-```
-
-Response includes rate limit headers:
-
-- `X-RateLimit-Limit-Minute`
-- `X-RateLimit-Remaining-Minute`
-- `X-RateLimit-Limit-Hour`
-- `X-RateLimit-Remaining-Hour`
-
-Access API at:
-
-- Interactive docs: http://localhost:8000/docs
-- Health check: http://localhost:8000/health
-- Stats: http://localhost:8000/stats
-
-#### 4. Query via API
-
-```bash
-curl -X POST "http://localhost:8000/query" \
-  -H "Content-Type: application/json" \
-  -d '{"query": "What is RAG?", "user_id": "test", "return_sources": true}'
-```
-
-See [Quick Start Guide](docs/quickstart.md) for detailed instructions.
-
-## 🔧 Tech Stack
-
-| Component           | Development                      | Production           |
-| ------------------- | -------------------------------- | -------------------- |
-| **LLM**             | Gemini 1.5 Flash                 | Gemini 1.5 Flash/Pro |
-| **Vector DB**       | Chroma (local)                   | Qdrant Cloud         |
-| **Embedding Cache** | SQLite                           | Redis                |
-| **Response Cache**  | Redis                            | Redis/Postgres       |
-| **Frameworks**      | LangChain, LangGraph, LlamaIndex |
-
-## 📝 Environment Variables
-
-See [.env.example](.env.example) for all available configuration options.
-
-Key variables:
-
-- `GEMINI_API_KEY` - Google Gemini API key
-- `VECTOR_DB` - Vector database choice (chroma/qdrant)
-- `ENVIRONMENT` - Running mode (dev/prod)
-- `QDRANT_URL` - Qdrant Cloud URL (for prod)
-- `REDIS_HOST` - Redis server (for caching)
+### 1. Backend Server Setup
+1. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv myenv
+   source myenv/bin/activate  # Linux/Mac
+   # or myenv\Scripts\activate on Windows
+   ```
+2. Install Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Set up your `.env` configuration file:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your GEMINI_API_KEY and custom database settings
+   ```
+4. Start the FastAPI backend:
+   ```bash
+   python scripts/run_server.py
+   ```
+   *The API documentation is now accessible at `http://localhost:8000/docs`.*
+
+### 2. Frontend Interface Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
+   *Open `http://localhost:3000` to interact with the visual portal.*
+
+### 3. Docker Compose Orchestration (Recommended)
+You can build and spin up both services with a single command:
+1. Ensure your `.env` file exists in the root directory and has your `GEMINI_API_KEY` filled.
+2. Build and launch the containers:
+   ```bash
+   docker-compose up --build
+   ```
+3. Access the services:
+   - **Aegis Frontend UI**: http://localhost:3000
+   - **FastAPI Documentation**: http://localhost:8000/docs
+
+---
 
 ## 🧪 Testing
-
+The python backend includes a complete integration test suite ensuring correct state graph execution, guardrails validation, and cache management:
 ```bash
 pytest tests/
 ```
-
-## 📚 Documentation
-
-- [Quick Start Guide](docs/quickstart.md)
-- [Phase 1 Details](docs/phase1.md) - Basic RAG Pipeline
-- [Phase 2 Details](docs/phase2.md) - Agentic RAG with LangGraph
-- [Phase 3 Details](docs/phase3.md) - LlamaIndex Integration
-- [Phase 4 Details](docs/phase4.md) - Production Deployment
-- [LangChain Documentation](https://python.langchain.com/)
-- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
-- [LlamaIndex Documentation](https://docs.llamaindex.ai/)
-- [Gemini API Documentation](https://ai.google.dev/docs)
-
-## 🛣️ Roadmap
-
-- [x] Phase 0: Tech stack configuration
-- [x] Phase 1: Basic RAG pipeline
-- [x] Phase 2: Agentic orchestration
-- [x] Phase 3: Advanced retrieval (LlamaIndex)
-- [x] Phase 4: Production features
-

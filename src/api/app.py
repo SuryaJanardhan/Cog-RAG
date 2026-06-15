@@ -3,7 +3,7 @@ FastAPI application for RAG API endpoints.
 Provides REST API for querying the RAG system.
 """
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import logging
@@ -44,6 +44,9 @@ class QueryRequest(BaseModel):
     user_id: Optional[str] = Field(None, description="Optional user identifier")
     return_sources: bool = Field(True, description="Whether to return source documents")
     use_agentic: bool = Field(False, description="Use agentic RAG with LangGraph (Phase 2)")
+    llm_provider: Optional[str] = Field("gemini", description="LLM provider: gemini, openai, groq")
+    llm_api_key: Optional[str] = Field(None, description="Optional custom API key for the provider")
+    llm_model: Optional[str] = Field(None, description="Optional custom model name")
 
     class Config:
         json_schema_extra = {
@@ -51,7 +54,10 @@ class QueryRequest(BaseModel):
                 "query": "What is the main topic of the documents?",
                 "user_id": "user123",
                 "return_sources": True,
-                "use_agentic": False
+                "use_agentic": False,
+                "llm_provider": "gemini",
+                "llm_api_key": None,
+                "llm_model": None
             }
         }
 
@@ -157,6 +163,61 @@ async def health_check():
     )
 
 
+def get_custom_llm(provider: Optional[str], api_key: Optional[str], model: Optional[str]):
+    """Instantiate a custom LangChain LLM model based on provider, key, and model name."""
+    if not provider:
+        return None
+    provider = provider.lower()
+    
+    if provider == "openai":
+        try:
+            from langchain_openai import ChatOpenAI
+            final_key = api_key or settings.openai_api_key
+            if not final_key:
+                raise ValueError("OpenAI API key not configured")
+            return ChatOpenAI(
+                model=model or "gpt-4o",
+                openai_api_key=final_key,
+                temperature=0.2
+            )
+        except Exception as e:
+            logger.error(f"Failed to load OpenAI model: {e}")
+            raise HTTPException(status_code=400, detail=f"Failed to load OpenAI model: {str(e)}")
+            
+    elif provider == "groq":
+        try:
+            from langchain_groq import ChatGroq
+            final_key = api_key or settings.groq_api_key
+            if not final_key:
+                raise ValueError("Groq API key not configured")
+            return ChatGroq(
+                model=model or "llama3-8b-8192",
+                groq_api_key=final_key,
+                temperature=0.2
+            )
+        except Exception as e:
+            logger.error(f"Failed to load Groq model: {e}")
+            raise HTTPException(status_code=400, detail=f"Failed to load Groq model: {str(e)}")
+            
+    elif provider == "gemini":
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            final_key = api_key or settings.gemini_api_key
+            if not final_key:
+                raise ValueError("Gemini API key not configured")
+            return ChatGoogleGenerativeAI(
+                model=model or settings.gemini_model,
+                google_api_key=final_key,
+                temperature=settings.gemini_temperature,
+                max_output_tokens=settings.gemini_max_output_tokens,
+            )
+        except Exception as e:
+            logger.error(f"Failed to load Gemini model: {e}")
+            raise HTTPException(status_code=400, detail=f"Failed to load Gemini model: {str(e)}")
+            
+    return None
+
+
 @app.post("/query", response_model=QueryResponse, tags=["RAG"])
 async def query_rag(request: QueryRequest):
     """
@@ -175,9 +236,25 @@ async def query_rag(request: QueryRequest):
         logger.info(f"Received query from user_id={request.user_id}: {request.query[:100]}...")
         logger.info(f"Mode: {'Agentic (Phase 2)' if request.use_agentic else 'Basic (Phase 1)'}")
         
+        # Get custom LLM if requested
+        custom_llm = get_custom_llm(
+            provider=request.llm_provider,
+            api_key=request.llm_api_key,
+            model=request.llm_model
+        )
+        
         if request.use_agentic:
             # Use agentic RAG with LangGraph
-            graph = get_agentic_rag()
+            if custom_llm:
+                from ..graph.workflow import AgenticRAGGraph
+                # Dynamically instantiate a local graph config for thread safety
+                graph = AgenticRAGGraph()
+                graph.nodes.llm = custom_llm
+                if hasattr(graph.nodes, "llm_client") and graph.nodes.llm_client:
+                    graph.nodes.llm_client._chat_model = custom_llm
+            else:
+                graph = get_agentic_rag()
+                
             graph_result = graph.invoke(request.query)
             
             # Convert to standard response format
@@ -201,17 +278,33 @@ async def query_rag(request: QueryRequest):
                 result["sources"] = retriever.get_sources(graph_result["documents"])
         else:
             # Use basic RAG pipeline
-            pipeline = get_rag_pipeline()
-            result = pipeline.query(
-                question=request.query,
-                user_id=request.user_id,
-                return_sources=request.return_sources
-            )
+            if custom_llm:
+                from ..rag.chain import RAGChain
+                pipeline = get_rag_pipeline()
+                # Dynamically compile a local chain to prevent thread collisions
+                local_chain = RAGChain(retriever=pipeline.rag_chain.retriever, use_cache=pipeline.rag_chain.use_cache)
+                local_chain.llm = custom_llm
+                local_chain.chain = local_chain._build_chain()
+                
+                result = local_chain.query(request.query, return_sources=request.return_sources)
+                result["metadata"] = {
+                    "user_id": request.user_id,
+                    "mode": "basic",
+                    "cache_stats": local_chain.get_cache_stats()
+                }
+            else:
+                pipeline = get_rag_pipeline()
+                result = pipeline.query(
+                    question=request.query,
+                    user_id=request.user_id,
+                    return_sources=request.return_sources
+                )
         
         logger.info(f"Query processed successfully")
-        
         return QueryResponse(**result)
-    
+        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}", exc_info=True)
         raise HTTPException(
@@ -257,6 +350,71 @@ async def batch_query_rag(queries: List[str], user_id: Optional[str] = None):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing batch query: {str(e)}"
         )
+
+
+@app.post("/upload", tags=["Ingestion"])
+async def upload_documents(files: List[UploadFile] = File(...)):
+    """
+    Upload documents and index them in the RAG vector store.
+    """
+    try:
+        import os
+        import shutil
+        from ..ingestion.ingestion_sync import IncrementalIngestionManager
+        
+        os.makedirs("./data", exist_ok=True)
+        ingest_manager = IncrementalIngestionManager()
+        results = []
+        for file in files:
+            file_path = os.path.join("./data", file.filename)
+            # Save the file
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+            
+            # Run synchronization
+            logger.info(f"Ingesting file: {file.filename}")
+            processed = ingest_manager.sync_file(file_path)
+            results.append({
+                "filename": file.filename,
+                "status": "indexed" if processed else "skipped (unchanged)",
+                "path": file_path
+            })
+        return {"message": "Upload complete", "results": results}
+    except Exception as e:
+        logger.error(f"Failed to upload documents: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+
+
+@app.get("/documents", tags=["Ingestion"])
+async def list_documents():
+    """
+    List all indexed documents in the RAG ingestion catalog.
+    """
+    try:
+        import os
+        import sqlite3
+        catalog_path = "./data/ingestion_catalog.db"
+        if not os.path.exists(catalog_path):
+            return {"documents": []}
+        conn = sqlite3.connect(catalog_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT filepath, file_hash, last_modified FROM file_catalog")
+        rows = cursor.fetchall()
+        conn.close()
+        
+        docs = []
+        for row in rows:
+            filepath, file_hash, mtime = row
+            docs.append({
+                "filename": os.path.basename(filepath),
+                "filepath": filepath,
+                "file_hash": file_hash,
+                "last_modified": mtime
+            })
+        return {"documents": docs}
+    except Exception as e:
+        logger.error(f"Failed to fetch documents: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/stats", tags=["Statistics"])

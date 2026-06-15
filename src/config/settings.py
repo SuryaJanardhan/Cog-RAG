@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     gemini_temperature: float = Field(default=0.7)
     gemini_max_output_tokens: int = Field(default=2048)
     
+    # Custom LLM Configurations
+    openai_api_key: str = Field(default="")
+    groq_api_key: str = Field(default="")
+    
     # Vector Database
     vector_db: Literal["chroma", "qdrant"] = Field(default="chroma")
     
