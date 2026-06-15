@@ -52,3 +52,7 @@ pytest-asyncio>=0.21.0
 langchain-openai>=0.1.0
 langchain-groq>=0.1.0
 python-multipart>=0.0.9
+
+# Cloud Vector DBs
+langchain-pinecone>=0.1.0
+pinecone-client>=3.0.0

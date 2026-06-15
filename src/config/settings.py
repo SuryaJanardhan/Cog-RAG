@@ -31,7 +31,11 @@ class Settings(BaseSettings):
     groq_api_key: str = Field(default="")
     
     # Vector Database
-    vector_db: Literal["chroma", "qdrant"] = Field(default="chroma")
+    vector_db: Literal["chroma", "qdrant", "pinecone"] = Field(default="chroma")
+    
+    # Pinecone Configuration
+    pinecone_api_key: str = Field(default="")
+    pinecone_index_name: str = Field(default="aegis-rag")
     
     # Qdrant Configuration
     qdrant_url: str = Field(default="")
@@ -54,6 +58,7 @@ class Settings(BaseSettings):
     response_cache_type: Literal["redis", "postgres"] = Field(default="redis")
     
     # Redis Configuration
+    redis_url: str = Field(default="")
     redis_host: str = Field(default="localhost")
     redis_port: int = Field(default=6379)
     redis_db: int = Field(default=0)

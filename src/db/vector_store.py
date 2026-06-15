@@ -113,6 +113,60 @@ class ChromaVectorDB(VectorDBClient):
         )
 
 
+class PineconeVectorDB(VectorDBClient):
+    """Pinecone vector database client for production cloud hosting."""
+    
+    def __init__(self):
+        self.api_key = settings.pinecone_api_key
+        self.index_name = settings.pinecone_index_name
+        
+    def initialize(self) -> None:
+        """Initialize Pinecone index client."""
+        if not self.api_key:
+            print("[Warning] Pinecone API Key is not set.")
+            return
+            
+        try:
+            from pinecone import Pinecone, ServerlessSpec
+            pc = Pinecone(api_key=self.api_key)
+            existing_indexes = [idx.name for idx in pc.list_indexes()]
+            if self.index_name not in existing_indexes:
+                print(f"Creating Pinecone index: {self.index_name}...")
+                pc.create_index(
+                    name=self.index_name,
+                    dimension=settings.embedding_dimension,
+                    metric="cosine",
+                    spec=ServerlessSpec(
+                        cloud="aws",
+                        region="us-east-1"
+                    )
+                )
+                print(f"Successfully created Pinecone index: {self.index_name}")
+            else:
+                print(f"Using existing Pinecone index: {self.index_name}")
+        except Exception as e:
+            print(f"[Pinecone] Warning during initialization check: {e}")
+            
+    def get_vectorstore(self, embeddings) -> VectorStore:
+        """Get Pinecone vector store instance."""
+        try:
+            from langchain_pinecone import PineconeVectorStore
+        except ImportError:
+            raise ImportError(
+                "Could not import langchain_pinecone. "
+                "Please install it with `pip install langchain-pinecone`."
+            )
+        
+        if not self.api_key:
+            raise ValueError("PINECONE_API_KEY is required to connect to Pinecone.")
+            
+        return PineconeVectorStore(
+            index_name=self.index_name,
+            embedding=embeddings,
+            pinecone_api_key=self.api_key
+        )
+
+
 def get_vector_db() -> VectorDBClient:
     """
     Factory function to get the appropriate vector database client
@@ -124,6 +178,9 @@ def get_vector_db() -> VectorDBClient:
     if settings.vector_db == "qdrant":
         print("Using Qdrant vector database (production)")
         return QdrantVectorDB()
+    elif settings.vector_db == "pinecone":
+        print("Using Pinecone vector database (production cloud)")
+        return PineconeVectorDB()
     else:
         print("Using Chroma vector database (development)")
         return ChromaVectorDB()

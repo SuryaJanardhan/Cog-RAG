@@ -90,14 +90,18 @@ class RedisEmbeddingCache(EmbeddingCache):
     """Redis-based embedding cache for production."""
     
     def __init__(self):
-        self.client = redis.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=settings.redis_db,
-            password=settings.redis_password if settings.redis_password else None,
-            decode_responses=True,
-        )
-        print("Initialized Redis embedding cache")
+        if settings.redis_url:
+            self.client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+            print("Initialized Redis embedding cache from connection URL")
+        else:
+            self.client = redis.Redis(
+                host=settings.redis_host,
+                port=settings.redis_port,
+                db=settings.redis_db,
+                password=settings.redis_password if settings.redis_password else None,
+                decode_responses=True,
+            )
+            print("Initialized Redis embedding cache")
     
     def get(self, text: str) -> Optional[List[float]]:
         """Get cached embedding from Redis."""
@@ -143,14 +147,18 @@ class RedisResponseCache(ResponseCache):
     """Redis-based response cache."""
     
     def __init__(self):
-        self.client = redis.Redis(
-            host=settings.redis_host,
-            port=settings.redis_port,
-            db=settings.redis_db,
-            password=settings.redis_password if settings.redis_password else None,
-            decode_responses=True,
-        )
-        print("Initialized Redis response cache")
+        if settings.redis_url:
+            self.client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
+            print("Initialized Redis response cache from connection URL")
+        else:
+            self.client = redis.Redis(
+                host=settings.redis_host,
+                port=settings.redis_port,
+                db=settings.redis_db,
+                password=settings.redis_password if settings.redis_password else None,
+                decode_responses=True,
+            )
+            print("Initialized Redis response cache")
     
     def get(self, query: str, doc_ids: List[str]) -> Optional[str]:
         """Get cached response from Redis."""
